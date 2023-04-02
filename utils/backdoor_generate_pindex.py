@@ -53,10 +53,10 @@ def generate_single_target_attack_train_pidx(
         else:
             if p_num is not None or round(pratio * len(targets)):
                 if p_num is not None:
-                    non_zero_array = np.random.choice(np.where(targets == tlabel)[0], p_num, replace = False)
+                    non_zero_array = np.random.choice(np.where(targets != tlabel)[0], p_num, replace = False)
                     pidx[list(non_zero_array)] = 1
                 else:
-                    non_zero_array = np.random.choice(np.where(targets == tlabel)[0], round(pratio * len(targets)), replace = False)
+                    non_zero_array = np.random.choice(np.where(targets != tlabel)[0], round(pratio * len(targets)), replace = False)
                     pidx[list(non_zero_array)] = 1
     logging.info(f'poison num:{sum(pidx)},real pratio:{sum(pidx) / len(pidx)}')
     if sum(pidx) == 0:
