@@ -673,6 +673,6 @@ if __name__ == '__main__':
         'acc': clean_acc,
         'ra': robust_acc
     },
-    os.getcwd() + f'{save_path}/fp/defense_result.pt'
+    os.getcwd() + f'{save_path}/fp/defense_result_last.pt'
     )
     
