@@ -160,8 +160,10 @@ def obtain_adv_dataset(model,splitdata):
     output = model(x)
     num_conv_layer = len(conv_outputs)
     total_feature = 0
+    inter_node = [0]
     for layer in conv_outputs:
         total_feature+=layer.shape[1]
+        inter_node.append(total_feature)
     for handle in handles:
         handle.remove()
     
@@ -224,10 +226,25 @@ def obtain_adv_dataset(model,splitdata):
 
     adv_list = []
 
-    for i in tqdm(range(total_feature)):
-        adv_list.append(adv_sample_generation(i, x, adv_images))
+    rank_list = []
 
-    return adv_list,y
+    layer_idx = 1
+    for i in tqdm(range(total_feature)):
+        if i<inter_node[layer_idx]:
+            adv_list.append(adv_sample_generation(i, x, adv_images))
+        else:
+            layer_idx+=1
+            rank_list.append(ranking(model,adv_list,y))
+            adv_list = []
+            adv_list.append(adv_sample_generation(i, x, adv_images))
+    
+    rank_list.append(ranking(model,adv_list,y))
+    # next, please reshape the rank_list to a 2d list
+
+    rank_list = np.array(rank_list)
+    rank_list = rank_list.reshape(-1,rank_list.shape[-1])
+
+    return rank_list
 
 def train(model,train_loader,test_loader,rank_list):
     total = 0
