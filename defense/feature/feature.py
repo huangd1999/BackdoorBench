@@ -7,6 +7,7 @@ from torchvision.transforms import ToTensor
 from torchvision.datasets import FashionMNIST, MNIST, CIFAR10, GTSRB, ImageFolder
 import torch
 import logging
+from utils.aggregate_block import get_dataset_normalization
 import argparse
 import sys
 from tqdm import tqdm
@@ -136,25 +137,26 @@ def ranking(model,adv_list,label):
     return rank_list
 
 def obtain_adv_dataset(model,splitdata):
+    mean, std = get_dataset_mean_std(args.dataset)
     if args.dataset == 'tiny':
         dataset = ImageFolder('./data/tiny/tiny-imagenet-200/train/', transform=ToTensor())
         train_loader = torch.utils.data.DataLoader(dataset, batch_size=32)
-        model = nn.Sequential(Norm_layer([0.485, 0.456, 0.406],[0.229, 0.224, 0.225]),model)
+        model = nn.Sequential(Norm_layer(mean,std),model)
         model = model.cuda()
     elif args.dataset == 'cifar10':
         dataset = CIFAR10('./data/cifar10', train=True, download=True, transform=ToTensor())
         train_loader = torch.utils.data.DataLoader(dataset, batch_size=32)
-        model = nn.Sequential(Norm_layer([0.4914, 0.4822, 0.4465],[0.2023, 0.1994, 0.2010]),model)
+        model = nn.Sequential(Norm_layer(mean,std),model)
         model = model.cuda()
     elif args.dataset == 'cifar100':
         dataset = CIFAR100('./data/cifar100', train=True, download=True, transform=ToTensor())
         train_loader = torch.utils.data.DataLoader(dataset, batch_size=32)
-        model = nn.Sequential(Norm_layer([0.5071, 0.4867, 0.4408],[0.2675, 0.2565, 0.2761]),model)
+        model = nn.Sequential(Norm_layer(mean,std),model)
         model = model.cuda()
     elif args.dataset == 'gtsrb':
         dataset = GTSRB('./data/gtsrb', train=True, download=True, transform=ToTensor())
         train_loader = torch.utils.data.DataLoader(dataset, batch_size=32)
-        model = nn.Sequential(Norm_layer([0.3403, 0.3121, 0.3214],[0.2724, 0.2608, 0.2669]),model)
+        model = nn.Sequential(Norm_layer(mean,std),model)
         model = model.cuda()
 
     for idx, (data, label) in enumerate(tqdm(train_loader)):
