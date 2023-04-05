@@ -37,6 +37,7 @@ from pprint import pprint, pformat
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn import metrics
+from utils.choose_index import choose_index
 
 def dynamiccluster(arrays):
     score_list = list()
@@ -111,13 +112,9 @@ def get_args():
     print(arg)
     return arg
 
-def split_dataset(train_dataset):
-    print(len(train_dataset))
-    _,split_data = random_split(train_dataset,[len(train_dataset)-2500,2500])
-    return split_data
-
 def ranking(model,adv_list,label):
-    for data in tqdm(adv_list):
+    rank_list = []
+    for data in adv_list:
         result_list = []
         for image in data:
             pred = model(image.cuda())
@@ -126,9 +123,8 @@ def ranking(model,adv_list,label):
             correct = np.sum(correct.numpy(), axis=-1)
             result_list.append(correct/image.shape[0])
 
-        # print(correct/500)
-        result.append(result_list)
-    return result
+        rank_list.append(result_list)
+    return rank_list
 
 def obtain_adv_dataset(model,splitdata):
 
@@ -241,7 +237,7 @@ def obtain_adv_dataset(model,splitdata):
     rank_list.append(ranking(model,adv_list,y))
     # next, please reshape the rank_list to a 2d list
 
-    rank_list = np.array(rank_list)
+    rank_list = np.array(rank_list, dtype=object)
     rank_list = rank_list.reshape(-1,rank_list.shape[-1])
 
     return rank_list
@@ -260,13 +256,11 @@ def train(model,train_loader,test_loader,rank_list):
 
     start_idx = 0
     for parameter in model.parameters():
-        # parameter.requires_grad_(False)
         if len(parameter.data.shape)==4:
             end = start_idx+parameter.data.shape[0]
             helper = rank_list[start_idx:end]
             helper = dynamiccluster(helper)
             start_idx = end
-            # parameter.requires_grad_(True) 
             for fmidx in helper:
                 parameter.data[fmidx] = torch.zeros_like(parameter.data[fmidx])
 
@@ -408,14 +402,12 @@ if __name__ == "__main__":
                 clean_correct += np.sum(curr_correct.numpy(), axis=-1)
                 total_train += len(labels)
             print(asr_acc, asr_acc/total_bd,  clean_acc, clean_acc/total_clean, clean_correct, clean_correct/total_train)
-        adv_list,label = obtain_adv_dataset(model,data_clean_trainset)
-        rank_list = ranking(model, adv_list,label)
+        rank_list = obtain_adv_dataset(model,data_clean_trainset)
         model = train(model,data_train_loader,data_clean_loader,rank_list)
         with torch.no_grad():
             model.eval()
             asr_acc = 0
             for i, (inputs,labels) in enumerate(data_bd_loader):
-
                 inputs = inputs.to(args.device)
                 outputs = model(inputs)
                 pred = np.argmax(outputs.cpu().detach(), axis=-1)
