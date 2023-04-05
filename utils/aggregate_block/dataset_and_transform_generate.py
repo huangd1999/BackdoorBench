@@ -101,6 +101,43 @@ def get_dataset_normalization(dataset_name):
         raise Exception("Invalid Dataset")
     return dataset_normalization
 
+def get_dataset_mean_std(dataset_name):
+    # idea : given name, return the default normalization of images in the dataset
+    if dataset_name == "cifar10":
+        #from wanet
+        mean = [0.4914, 0.4822, 0.4465]
+        std = [0.247, 0.243, 0.261]
+        # dataset_normalization = (transforms.Normalize([0.4914, 0.4822, 0.4465], [0.247, 0.243, 0.261]))
+    elif dataset_name == 'cifar100':
+        '''get from https://gist.github.com/weiaicunzai/e623931921efefd4c331622c344d8151'''
+        # dataset_normalization = (transforms.Normalize([0.5071, 0.4865, 0.4409],[0.2673, 0.2564, 0.2762]))
+        mean = [0.5071, 0.4865, 0.4409]
+        std = [0.2673, 0.2564, 0.2762]
+    elif dataset_name == "mnist":
+        # dataset_normalization = (transforms.Normalize([0.5], [0.5]))
+        mean = [0.5]
+        std = [0.5]
+    elif dataset_name == 'tiny':
+        dataset_normalization = (transforms.Normalize([0.4802, 0.4481, 0.3975], [0.2302, 0.2265, 0.2262]))
+        mean = [0.4802, 0.4481, 0.3975]
+        std = [0.2302, 0.2265, 0.2262]
+    elif dataset_name == "gtsrb" or dataset_name == "celeba":
+        dataset_normalization = transforms.Normalize([0, 0, 0], [1, 1, 1])
+        mean = [0, 0, 0]
+        std = [1, 1, 1]
+    elif dataset_name == 'imagenet':
+        dataset_normalization = (
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            )
+        )
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+    else:
+        raise Exception("Invalid Dataset")
+    return mean, std
+
 def get_dataset_denormalization(normalization : transforms.Normalize):
 
     mean, std =  normalization.mean, normalization.std
