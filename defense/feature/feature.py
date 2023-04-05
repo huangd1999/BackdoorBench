@@ -258,17 +258,12 @@ def obtain_adv_dataset(model,splitdata):
             adv_list.append(adv_sample_generation(i, x, adv_images))
         else:
             layer_idx+=1
-            rank_helper = ranking(model,adv_list,y)
-            rank_list.append(dynamiccluster(rank_helper))
-
+            rank_list.append(dynamiccluster(ranking(model,adv_list,y)))
             adv_list = []
             adv_list.append(adv_sample_generation(i, x, adv_images))
     
     rank_list.append(dynamiccluster(ranking(model,adv_list,y)))
-    # next, please reshape the rank_list to a 2d list
 
-    # rank_list = np.array(rank_list, dtype=object)
-    # rank_list = rank_list.reshape(-1,rank_list.shape[-1])
 
     return rank_list
 
@@ -287,7 +282,7 @@ def train(model,train_loader,test_loader,rank_list):
     start_idx = 0
     for parameter in model.parameters():
         if len(parameter.data.shape)==4:
-            helper = rank_list[i]
+            helper = rank_list[start_idx]
             for fmidx in helper:
                 parameter.data[fmidx] = torch.zeros_like(parameter.data[fmidx])
             start_idx+=1
