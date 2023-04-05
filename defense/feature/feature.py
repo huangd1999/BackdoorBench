@@ -7,7 +7,6 @@ from torchvision.transforms import ToTensor
 from torchvision.datasets import FashionMNIST, MNIST, CIFAR10, GTSRB, ImageFolder
 import torch
 import logging
-from utils.aggregate_block import get_dataset_normalization
 import argparse
 import sys
 from tqdm import tqdm
@@ -26,7 +25,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 from utils.aggregate_block.fix_random import fix_random
 from utils.aggregate_block.model_trainer_generate import generate_cls_model
-from utils.aggregate_block.dataset_and_transform_generate import get_input_shape, get_num_classes, get_transform
+from utils.aggregate_block.dataset_and_transform_generate import get_input_shape, get_num_classes, get_transform, get_dataset_mean_std
 from utils.bd_dataset import prepro_cls_DatasetBD
 from utils.nCHW_nHWC import *
 from utils.save_load_attack import load_attack_result
@@ -39,7 +38,6 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn import metrics
 from utils.choose_index import choose_index
-
 class Normalize(nn.Module):
     def __init__(self, mean, std):
         super(Normalize, self).__init__()
@@ -289,12 +287,10 @@ def train(model,train_loader,test_loader,rank_list):
     start_idx = 0
     for parameter in model.parameters():
         if len(parameter.data.shape)==4:
-            end = start_idx+parameter.data.shape[0]
-            helper = rank_list[start_idx:end]
-            helper = dynamiccluster(helper)
-            start_idx = end
+            helper = rank_list[i]
             for fmidx in helper:
                 parameter.data[fmidx] = torch.zeros_like(parameter.data[fmidx])
+            start_idx+=1
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
